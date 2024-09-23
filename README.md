@@ -1,0 +1,1 @@
+# plugins-trusted-shops-easy-integration-for-woocommerce
