@@ -5,7 +5,7 @@
  * @package automattic/jetpack-autoloader
  */
 
-namespace Automattic\Jetpack\Autoloader\jp2a9198bb77c7e27e0e7b4b345922e0a1\al2_12_0;
+namespace Automattic\Jetpack\Autoloader\jpd992ac1db6bc9e1c163a9505a8a883cd;
 
  // phpcs:ignore
 
@@ -75,6 +75,8 @@ class Plugin_Locator {
 	 * @return array $plugin_paths The list of absolute paths we've found.
 	 */
 	public function find_using_request_action( $allowed_actions ) {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
 		/**
 		 * Note: we're not actually checking the nonce here because it's too early
 		 * in the execution. The pluggable functions are not yet loaded to give
@@ -115,6 +117,7 @@ class Plugin_Locator {
 				break;
 		}
 
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		return $this->convert_plugins_to_paths( $plugin_slugs );
 	}
 
