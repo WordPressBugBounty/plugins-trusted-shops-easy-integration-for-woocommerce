@@ -1,8 +1,8 @@
 <?php return array(
     'root' => array(
         'name' => 'vendidero/trusted-shops-easy-integration-for-woocommerce',
-        'pretty_version' => '2.0.5',
-        'version' => '2.0.5.0',
+        'pretty_version' => '2.0.6',
+        'version' => '2.0.6.0',
         'reference' => null,
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
@@ -20,8 +20,8 @@
             'dev_requirement' => false,
         ),
         'vendidero/trusted-shops-easy-integration-for-woocommerce' => array(
-            'pretty_version' => '2.0.5',
-            'version' => '2.0.5.0',
+            'pretty_version' => '2.0.6',
+            'version' => '2.0.6.0',
             'reference' => null,
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
