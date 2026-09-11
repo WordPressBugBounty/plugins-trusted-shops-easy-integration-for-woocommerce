@@ -17,7 +17,7 @@ class Package {
 	 *
 	 * @var string
 	 */
-	const VERSION = '2.0.6';
+	const VERSION = '2.0.7';
 
 	protected static $events_api = null;
 
@@ -51,8 +51,23 @@ class Package {
 		self::register_order_hooks();
 
 		add_action( 'before_woocommerce_init', array( __CLASS__, 'declare_feature_compatibility' ) );
+		add_action( 'ts_easy_integration_delete_export', array( __CLASS__, 'delete_export' ), 10, 2 );
 
 		do_action( 'ts_easy_integration_init' );
+	}
+
+	public static function delete_export( $filename ) {
+		$upload_dir  = wp_upload_dir();
+		$path        = trailingslashit( $upload_dir['basedir'] ) . 'woocommerce_uploads/' . $filename;
+		$header_path = $path . '.headers';
+
+		if ( @file_exists( $path ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.unlink_unlink
+		}
+
+		if ( @file_exists( $header_path ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			@unlink( $header_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.unlink_unlink
+		}
 	}
 
 	public static function declare_feature_compatibility() {
@@ -152,17 +167,12 @@ class Package {
 	}
 
 	protected static function init_hooks() {
-		if ( ! self::is_integration() ) {
-			add_action( 'init', array( __CLASS__, 'load_plugin_textdomain' ) );
-		}
-
 		add_action( 'init', array( '\Vendidero\TrustedShopsEasyIntegration\Shortcodes', 'init' ) );
+		add_action( 'init', array( __CLASS__, 'check_version' ), 10 );
+		add_action( 'init', array( __CLASS__, 'load_plugin_textdomain' ) );
 	}
 
 	public static function load_plugin_textdomain() {
-		add_filter( 'plugin_locale', array( __CLASS__, 'support_german_language_variants' ), 10, 2 );
-		add_filter( 'load_translation_file', array( __CLASS__, 'force_load_german_language_variant' ), 10, 2 );
-
 		if ( function_exists( 'determine_locale' ) ) {
 			$locale = determine_locale();
 		} else {
@@ -175,43 +185,10 @@ class Package {
 		load_plugin_textdomain( 'trusted-shops-easy-integration-for-woocommerce', false, plugin_basename( self::get_path() ) . '/i18n/languages/' );
 	}
 
-	public static function support_german_language_variants( $locale, $domain ) {
-		if ( 'trusted-shops-easy-integration-for-woocommerce' === $domain ) {
-			$locale = self::get_german_language_variant( $locale );
+	public static function check_version() {
+		if ( ! defined( 'IFRAME_REQUEST' ) && ( get_option( 'ts_easy_integration_version' ) !== self::get_version() ) ) {
+			Install::install();
 		}
-
-		return $locale;
-	}
-
-	/**
-	 * Use a tweak to force loading german language variants in WP 6.5
-	 * as WP does not allow using the plugin_locale filter to load a plugin-specific locale any longer.
-	 *
-	 * @param $file
-	 * @param $domain
-	 *
-	 * @return mixed
-	 */
-	public static function force_load_german_language_variant( $file, $domain ) {
-		if ( 'trusted-shops-easy-integration-for-woocommerce' === $domain && function_exists( 'determine_locale' ) && class_exists( 'WP_Translation_Controller' ) ) {
-			$locale     = determine_locale();
-			$new_locale = self::get_german_language_variant( $locale );
-
-			if ( $new_locale !== $locale ) {
-				$i18n_controller = \WP_Translation_Controller::get_instance();
-				$i18n_controller->load_file( $file, $domain, $locale ); // Force loading the determined file in the original locale.
-			}
-		}
-
-		return $file;
-	}
-
-	protected static function get_german_language_variant( $locale ) {
-		if ( apply_filters( 'ts_easy_integration_force_de_language', in_array( $locale, array( 'de_CH', 'de_CH_informal', 'de_AT' ), true ) ) ) {
-			$locale = apply_filters( 'ts_easy_integration_german_language_variant_locale', 'de_DE' );
-		}
-
-		return $locale;
 	}
 
 	public static function install() {
@@ -240,6 +217,14 @@ class Package {
 	 */
 	public static function is_integration() {
 		return class_exists( 'WooCommerce_Germanized' ) && version_compare( get_option( 'woocommerce_gzd_version', '1.0.0' ), '3.10.4', '>=' ) ? true : false;
+	}
+
+	public static function is_bool_attribute( $name ) {
+		if ( strstr( $name, 'enable-' ) || strstr( $name, 'disable-' ) ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
